@@ -3,16 +3,16 @@ Mmin = 0.5;           %min/max mass values
 Mmax = 20;
 A = 500;              %sky dimension
 fr = 3;               %fraction of Mmin determining mean of gaussian noise
-dim = 3;              %dimension (pixels) of PSF, must be odd integer
+dim = 5;              %dimension (pixels) of PSF, must be odd integer
 sigmapsf = 1;         %sigma of PSF  
 
 %creating different fields and images via custom functions stated below
 
-S = Crea_s(Mmin,Mmax,A);                        %generating field
+S = Crea_s(Mmin,Mmax,A);                       %generating field
 
-P_s = PSF_s(S,dim,sigmapsf);                    %convolving field with PSF
+P_s = PSF_s(S,dim,sigmapsf);                  %convolving field with PSF
 
-B_s = Back_s(S,fr, Mmin, A);                    %adding background to original field 
+B_s = Back_s(S,fr, Mmin, A);                  %adding background to original field 
 
 PB_s = PSF_s(B_s,dim,sigmapsf);               %convolving noisy field with PSF
 
@@ -95,13 +95,17 @@ rec_star = 0;
 unrec_star = 0;
 
 for n = 1:length(j)
+    
     s = find(B(j(n) - side : j(n) + side, k(n) - side : k(n) + side));
+    
     if s ~= 0
         rec_star = rec_star + 1;
     else
         unrec_star = unrec_star + 1;
     end
+    
     B(j(n) - side : j(n) + side, k(n) - side : k(n) + side) = 0;  %"cleaning" the analyzed part
+    
 end
 
 %stars not deleted are false stars
@@ -129,13 +133,14 @@ side = (dim - 1)/2;
 %dim is size of PSF, A is the sky to reconstruct
 %threshold is the minimum value for something to be read as a 'star'
 
-m = max(A,[],'all');                             %finding absolute maximum
+%m = max(A,[],'all');                             
+m = max(max(A));                                 %finding absolute maximum
 A1 = Copy_m(A,side);                             %creating 'scan' matrix 
 B = zeros(size(A));                              %creating empty matrix to save the found stars
 
 while m >threshold                              %while max is over treshold value
     
-    [j,k] = find(A1==m);                         %keep scanning
+    [j,k] = find(A1==m);                         %keep scanning util position of the maximum is found
     
     %copying in correct position in B
     star = sum(A1(j - side : j + side, k - side : k + side), 'all');
@@ -148,4 +153,44 @@ while m >threshold                              %while max is over treshold valu
     m = max(max(A1));                                   %finding next maximum
 end
 end
+
+
+%{
+SOLO PSF:
+
+Cambiando sigmapsf tenendo ferma la sua dim il risultanto non varia, il
+cielo è debolmente dipendente dalla sigma
+
+Dim = 3, sigma = 1, rec = 507, unrec = 5
+Dim = 3, sigma = 5, rec = 508, unrec = 4
+Dim = 3, sigma = 13, rec = 508, unrec = 4
+
+Cambiando invece la dim, si può solo aumentare nel caso, la situazione
+peggiora, si ha un effetto di sigmapsf che se aumenta peggiora la
+situazione, ma solo se sta sotto la dim
+
+Dim = 7, sigma = 1, rec = 482, unrec = 30
+Dim = 7, sigma = 3, rec = 452, unrec = 60
+Dim = 7, sigma = 7, rec = 447, unrec = 65
+Dim = 7, sigma = 15, rec = 449, unrec = 63
+
+Aumentando ancora la dim la situazione peggiora
+con sempre la sigmapsf che può peggiorare le cose, ma solo fino ad un certo
+punto
+
+Dim = 15, sigma = 1, rec = 402, unrec = 110
+Dim = 15, sigma = 13, rec = 362, unrec = 150
+Dim = 15, sigma = 31, rec = 360, unrec = 152
+
+
+%}
+
+%{
+s = histogram(S(S>0));
+edg = s.BinEdges;
+hls = histogram(S(S>0),edg);
+hold on
+hlbs = histogram(Bs(Bs>0),edg);
+set(gca, 'yscale','log')
+%}
 
