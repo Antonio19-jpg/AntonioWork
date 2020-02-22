@@ -3,6 +3,7 @@ Mmin = 0.5;           %min/max mass values
 Mmax = 20;
 A = 500;              %sky dimension
 fr = 3;               %fraction of Mmin determining mean of gaussian noise
+frb = 1;              %fraction used in ABack_s
 dim = 5;              %dimension (pixels) of PSF, must be odd integer
 sigmapsf = 1;         %sigma of PSF  
 
@@ -12,24 +13,37 @@ S = Crea_s(Mmin,Mmax,A);                       %generating field
 
 P_s = PSF_s(S,dim,sigmapsf);                  %convolving field with PSF
 
-B_s = Back_s(S,fr, Mmin, A);                  %adding background to original field 
+B_s = Back_s(S,fr, Mmin,A);                  %adding background to original field 
 
 PB_s = PSF_s(B_s,dim,sigmapsf);               %convolving noisy field with PSF
+
+BPB_s = ABack_s(PB_s,frb,Mmin,A);            %adding bakground noise to the field
 
 %reconstructing fields using findmax
 %reconstructing original field convolved with PSF
 
 Ps = findmax(P_s,0,dim,Mmin);
 
-%reconstructing noisy field convolved with PSF    %base Mmin/fr + 5 * (Mmin/(10 * fr))
+%reconstructing noisy field added to PSF    %base Mmin/fr + 5 * (Mmin/(10 * fr))
 
 Bs = findmax(B_s,Mmin/fr + 5 * (Mmin/(10 * fr)),dim,Mmin);
+
+%reconstructing noisy field convolved with PSF
+
+PBs = findmax(PB_s,Mmin/fr + 5 * (Mmin/(10 * fr)),dim,Mmin);
+
+%reconstructing noisy field with bkg before and after PSF added Mmin/fr
+%because the medium noise in one pixel is the sum of the mean of the two
+%noises
+
+BPBs = findmax(BPB_s,Mmin/frb + Mmin/fr + 4 * (Mmin/(10 * frb)),dim,Mmin);
 
 %count number of star and compare the skies
 
 Compare_s(S,Ps,dim);       %analysis of convolution between psf and original sky
-Compare_s(S,Bs,dim);       %analysis of convolution between psf and original sky plus background
-
+Compare_s(S,Bs,dim);       %analysis of convolution between psf and original sky background added after
+Compare_s(S,PBs,dim);      %analysis of convolution between psf and original sky plus background
+Compare_s(S,BPBs,dim);     %analysis of convolution between psf and original sky plus background and bkg added after
 
 function S = Crea_s(Mmin,Mmax,A) 
 %randomly genereates an A-by-A field with values in [Mmin;Mmax]
@@ -66,6 +80,17 @@ function B_s = Back_s(C, fr, Mmin, A)
 bkg = abs(normrnd((Mmin/fr),Mmin/(10*fr),A));     %creating gaussian positive noise
 %bg = histogram(bkg)
 B_s = bkg+C;                                      %summing noise to field
+end
+
+function AB_s = ABack_s(C, frb, Mmin, A) 
+%this function is used only for the final test (bkg before and after PSF)
+%adds gaussian background to a given A-by-A field C
+%gaussian with mean = Mmin/fr and stdev = mean/10, only positives are accepted
+%returns noisy field
+
+bkg = abs(normrnd((Mmin/frb),Mmin/(10*frb),A));     %creating gaussian positive noise
+%bg = histogram(bkg)
+AB_s = bkg+C;                                      %summing noise to field
 end
 
 function Compare_s(A,B,dim)
@@ -157,13 +182,13 @@ end
 
 %{
 SOLO PSF:
-
 Cambiando sigmapsf tenendo ferma la sua dim il risultanto non varia, il
 cielo è debolmente dipendente dalla sigma
 
 Dim = 3, sigma = 1, rec = 507, unrec = 5
 Dim = 3, sigma = 5, rec = 508, unrec = 4
 Dim = 3, sigma = 13, rec = 508, unrec = 4
+Dim = 5, sigma = 1, rec = 495, unrec = 17
 
 Cambiando invece la dim, si può solo aumentare nel caso, la situazione
 peggiora, si ha un effetto di sigmapsf che se aumenta peggiora la
@@ -182,6 +207,39 @@ Dim = 15, sigma = 1, rec = 402, unrec = 110
 Dim = 15, sigma = 13, rec = 362, unrec = 150
 Dim = 15, sigma = 31, rec = 360, unrec = 152
 
+CON IL BACKGROUND AGGIUNTO DOPO PSF:
+Dim PSF costrante a 5 e sigma a 1
+
+fr = 2, thre = 5, rec = 501, unrec = 11
+fr = 1, thre = 5, rec = 501, unrec = 11
+fr = 0.5, thre = 5, rec = 463, unrec = 49
+fr = 2, thre = 4, rec = 501, unrec = 11, false = 5
+fr = 1, thre = 4, rec = 501, unrec = 11, false = 5
+fr = 0.5, thre = 4, rec = 494, unrec = 18, false = 5
+fr = 3, thre = 4, rec = 501, unrec = 11, false = 5
+fr = 3, thre = 5, rec = 501, unrec = 11
+
+CON IL BACKGROUND CONVOLUTO CON PSF:
+Dim PSF costrante a 5 e sigma a 1
+
+fr = 2, thre = 5, rec = 324, unrec = 188
+fr = 1, thre = 5, rec = 157, unrec = 355
+fr = 0.5, thre = 5, rec = 76, unrec = 436
+fr = 2, thre = 4, rec = 402, unrec = 110
+fr = 1, thre = 4, rec = 208, unrec = 304
+fr = 0.5, thre = 4, rec = 100, unrec = 412
+fr = 3, thre = 4, rec = 502, unrec = 10
+fr = 3, thre = 5, rec = 482, unrec = 30
+
+CON IL BACKROUND PRIMA E DOPO:
+Dim PSF costrante a 5 e sigma a 1 fr = 3
+
+frb = 3, thre = 5, rec = 466, unrec = 46
+frb = 3, thre = 4, rec = 496, unrec = 16, false = 22
+frb = 2, thre = 5, rec = 347, unrec = 165
+frb = 2, thre = 4, rec = 422, unrec = 90, false = 16
+frb = 1, thre = 5, rec = 170, unrec = 342
+frb = 1, thre = 4, rec = 234, unrec = 278, false = 10
 
 %}
 
@@ -193,4 +251,3 @@ hold on
 hlbs = histogram(Bs(Bs>0),edg);
 set(gca, 'yscale','log')
 %}
-
