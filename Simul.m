@@ -3,7 +3,7 @@ Mmin = 0.5;           %min/max mass values
 Mmax = 20;
 A = 500;              %sky dimension
 fr = 3;               %fraction of Mmin determining mean of gaussian noise
-frb = 1;              %fraction used in ABack_s
+frb = 3;              %fraction used in ABack_s
 dim = 5;              %dimension (pixels) of PSF, must be odd integer
 sigmapsf = 1;         %sigma of PSF  
 
@@ -36,14 +36,14 @@ PBs = findmax(PB_s,Mmin/fr + 5 * (Mmin/(10 * fr)),dim,Mmin);
 %because the medium noise in one pixel is the sum of the mean of the two
 %noises
 
-BPBs = findmax(BPB_s,Mmin/frb + Mmin/fr + 4 * (Mmin/(10 * frb)),dim,Mmin);
+BPBs = findmax(BPB_s,Mmin/frb + Mmin/fr + 5 * (Mmin/(10 * frb)),dim,Mmin);
 
 %count number of star and compare the skies
 
 Compare_s(S,Ps,dim);       %analysis of convolution between psf and original sky
-Compare_s(S,Bs,dim);       %analysis of convolution between psf and original sky background added after
-Compare_s(S,PBs,dim);      %analysis of convolution between psf and original sky plus background
-Compare_s(S,BPBs,dim);     %analysis of convolution between psf and original sky plus background and bkg added after
+%Compare_s(S,Bs,dim);       %analysis of convolution between psf and original sky background added after
+%Compare_s(S,PBs,dim);      %analysis of convolution between psf and original sky plus background
+%Compare_s(S,BPBs,dim);     %analysis of convolution between psf and original sky plus background and bkg added after
 
 function S = Crea_s(Mmin,Mmax,A) 
 %randomly genereates an A-by-A field with values in [Mmin;Mmax]
@@ -119,14 +119,26 @@ rec_star = 0;
 
 unrec_star = 0;
 
+mis = 0;
+ok = 0;
+
 for n = 1:length(j)
     
-    s = find(B(j(n) - side : j(n) + side, k(n) - side : k(n) + side));
+    [r,c,s] = find(B(j(n) - side : j(n) + side, k(n) - side : k(n) + side));
     
     if s ~= 0
         rec_star = rec_star + 1;
+        
+        if (r ~= side) && (c ~= side) || (r ~= side) && (c == side) || (r == side) && (c ~= side)
+            mis = mis +1;
+            
+        else
+            ok = ok +1;
+            
+        end
     else
         unrec_star = unrec_star + 1;
+        
     end
     
     B(j(n) - side : j(n) + side, k(n) - side : k(n) + side) = 0;  %"cleaning" the analyzed part
@@ -140,7 +152,12 @@ m = find(B);
 false_star = length(m)
 
 unrec_star
+
 rec_star
+
+mis
+
+ok
 end
 
 function B = Copy_m(A,side)
@@ -183,14 +200,14 @@ end
 %{
 SOLO PSF:
 Cambiando sigmapsf tenendo ferma la sua dim il risultanto non varia, il
-cielo è debolmente dipendente dalla sigma
+cielo ? debolmente dipendente dalla sigma
 
 Dim = 3, sigma = 1, rec = 507, unrec = 5
 Dim = 3, sigma = 5, rec = 508, unrec = 4
 Dim = 3, sigma = 13, rec = 508, unrec = 4
 Dim = 5, sigma = 1, rec = 495, unrec = 17
 
-Cambiando invece la dim, si può solo aumentare nel caso, la situazione
+Cambiando invece la dim, si pu? solo aumentare nel caso, la situazione
 peggiora, si ha un effetto di sigmapsf che se aumenta peggiora la
 situazione, ma solo se sta sotto la dim
 
@@ -200,7 +217,7 @@ Dim = 7, sigma = 7, rec = 447, unrec = 65
 Dim = 7, sigma = 15, rec = 449, unrec = 63
 
 Aumentando ancora la dim la situazione peggiora
-con sempre la sigmapsf che può peggiorare le cose, ma solo fino ad un certo
+con sempre la sigmapsf che pu? peggiorare le cose, ma solo fino ad un certo
 punto
 
 Dim = 15, sigma = 1, rec = 402, unrec = 110
@@ -210,37 +227,46 @@ Dim = 15, sigma = 31, rec = 360, unrec = 152
 CON IL BACKGROUND AGGIUNTO DOPO PSF:
 Dim PSF costrante a 5 e sigma a 1
 
+fr = 3, thre = 5, rec = 501, unrec = 11
 fr = 2, thre = 5, rec = 501, unrec = 11
 fr = 1, thre = 5, rec = 501, unrec = 11
 fr = 0.5, thre = 5, rec = 463, unrec = 49
+fr = 3, thre = 4, rec = 501, unrec = 11, false = 5
 fr = 2, thre = 4, rec = 501, unrec = 11, false = 5
 fr = 1, thre = 4, rec = 501, unrec = 11, false = 5
 fr = 0.5, thre = 4, rec = 494, unrec = 18, false = 5
-fr = 3, thre = 4, rec = 501, unrec = 11, false = 5
-fr = 3, thre = 5, rec = 501, unrec = 11
+
+
 
 CON IL BACKGROUND CONVOLUTO CON PSF:
 Dim PSF costrante a 5 e sigma a 1
 
+fr = 3, thre = 5, rec = 482, unrec = 30
 fr = 2, thre = 5, rec = 324, unrec = 188
 fr = 1, thre = 5, rec = 157, unrec = 355
 fr = 0.5, thre = 5, rec = 76, unrec = 436
+fr = 3, thre = 4, rec = 502, unrec = 10
 fr = 2, thre = 4, rec = 402, unrec = 110
 fr = 1, thre = 4, rec = 208, unrec = 304
 fr = 0.5, thre = 4, rec = 100, unrec = 412
-fr = 3, thre = 4, rec = 502, unrec = 10
-fr = 3, thre = 5, rec = 482, unrec = 30
 
 CON IL BACKROUND PRIMA E DOPO:
 Dim PSF costrante a 5 e sigma a 1 fr = 3
 
 frb = 3, thre = 5, rec = 466, unrec = 46
-frb = 3, thre = 4, rec = 496, unrec = 16, false = 22
 frb = 2, thre = 5, rec = 347, unrec = 165
-frb = 2, thre = 4, rec = 422, unrec = 90, false = 16
 frb = 1, thre = 5, rec = 170, unrec = 342
+frb = 3, thre = 4, rec = 496, unrec = 16, false = 22
+frb = 2, thre = 4, rec = 422, unrec = 90, false = 16
 frb = 1, thre = 4, rec = 234, unrec = 278, false = 10
 
+VARIANDO LA DENSITà:
+Dim PSF costrante a 5 e sigma a 1 fr = 3
+
+i >= 0.998, rec = 495, unrec = 17, ratio_rec = 97%, ratio_unrec =  3%
+i >= 0.995, rec = 1144, unrec = 100, ratio_rec = 92%, ratio_unrec =  8%
+i >= 0.990, rec = 2134, unrec = 364, ratio_rec = 85%, ratio_unrec =  15%
+i >= 0.8, rec = 14127, unrec = 35979, ratio_rec = 28%, ratio_unrec =  72%
 %}
 
 %{
