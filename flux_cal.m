@@ -5,18 +5,22 @@ regolo2 = fitsread('Regolo-0025sec.fit');
 regolo3 = fitsread('Regolo-0035sec.fit');
 regolo4 = fitsread('Regolo-0045sec.fit');
 dark = fitsread('cal-005__dark.fit');
+flat = fitsread('cal-002__flat.fit');
 
+load('esospline.mat')
+load('vegaspline.mat')
 
 %mean and normalized in the time ( 5 sec exposition)
 
 regolo = (regolo1 - dark + regolo2 - dark + regolo3 - dark + regolo4 - dark)/20;
 
-%pcolor(log(regolo)), shading flat, colormap bone
+
 
 regolo = mean(regolo((425:465),:),1);
+flat = mean(flat((425:465),:),1);
+regolo = regolo./((flat - bias)./max(flat - bias));
 
-
-%calibrating the flux
+%calibrating vega
 x=[360; 371; 436; 459; 469; 501; 531; 558; 564; 588; 651; 710; 738; 769; 840; 867; 893; 924; ...
     961; 980; 1031; 1048; 1059; 1094; 1105; 1140; 1224; 1263];
 wl=[4159; 4201; 4426; 4511; 4545; 4658; 4765; 4861; 4879; 4965; 5188; 5400; 5496; 5607; ...
@@ -30,9 +34,17 @@ lambda = linterp(data(:,1),data(:,2)/(10^16),wl);
 
 R = vegaspline(wl)./esospline(wl);
 
+figure (1)
 plot(wl,R);
+    xlim ([3800 7000]);
+    
+figure (2)
+plot(wl,regolo);
 
-%migliora le spline, meno righe
+%regolo calibrated flux
+figure (3)
+plot(wl,regolo./R');
+    xlim ([3800 7000]);
 
 function yy = linterp(x,y,xx)
 %LINTERP Linear interpolation.
