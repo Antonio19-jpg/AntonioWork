@@ -1,10 +1,10 @@
 %settings
-Mmin = 0.5;           %min/max mass values
+Mmin = 1;           %min/max mass values
 Mmax = 20;
 A = 500;              %sky dimension
 fr = 3;               %fraction of Mmin determining mean of gaussian noise
 frb = 3;              %fraction used in ABack_s
-dim = 5;              %dimension (pixels) of PSF, must be odd integer
+dim = 3;              %dimension (pixels) of PSF, must be odd integer
 sigmapsf = 1;         %sigma of PSF  
 
 %creating different fields and images via custom functions stated below
@@ -109,7 +109,7 @@ B = Copy_m(B,side);
 
 %finding all the stars in the original sky.
 
-[j,k] = find(A);
+[i,j] = find(A);
 
 % setting the recognised stars count to 0
 
@@ -119,29 +119,19 @@ rec_star = 0;
 
 unrec_star = 0;
 
-mis = 0;
-ok = 0;
-
 for n = 1:length(j)
     
-    [r,c,s] = find(B(j(n) - side : j(n) + side, k(n) - side : k(n) + side));
+    s = find(B(i(n) - side : i(n) + side, j(n) - side : j(n) + side));
     
     if s ~= 0
         rec_star = rec_star + 1;
         
-        if (r ~= side) && (c ~= side) || (r ~= side) && (c == side) || (r == side) && (c ~= side)
-            mis = mis +1;
-            
-        else
-            ok = ok +1;
-            
-        end
     else
         unrec_star = unrec_star + 1;
         
     end
     
-    B(j(n) - side : j(n) + side, k(n) - side : k(n) + side) = 0;  %"cleaning" the analyzed part
+    B(i(n) - side : i(n) + side, j(n) - side : j(n) + side) = 0;  %"cleaning" the analyzed part
     
 end
 
@@ -154,10 +144,6 @@ false_star = length(m)
 unrec_star
 
 rec_star
-
-mis
-
-ok
 end
 
 function B = Copy_m(A,side)
@@ -235,8 +221,6 @@ fr = 3, thre = 4, rec = 501, unrec = 11, false = 5
 fr = 2, thre = 4, rec = 501, unrec = 11, false = 5
 fr = 1, thre = 4, rec = 501, unrec = 11, false = 5
 fr = 0.5, thre = 4, rec = 494, unrec = 18, false = 5
-
-
 
 CON IL BACKGROUND CONVOLUTO CON PSF:
 Dim PSF costrante a 5 e sigma a 1
