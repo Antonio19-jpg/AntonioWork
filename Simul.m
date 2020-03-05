@@ -4,7 +4,7 @@ Mmax = 20;
 A = 500;              %sky dimension
 fr = 3;               %fraction of Mmin determining mean of gaussian noise
 frb = 3;              %fraction used in ABack_s
-dim = 3;              %dimension (pixels) of PSF, must be odd integer
+dim = 5;              %dimension (pixels) of PSF, must be odd integer
 sigmapsf = 1;         %sigma of PSF  
 
 %creating different fields and images via custom functions stated below
@@ -40,9 +40,9 @@ BPBs = findmax(BPB_s,Mmin/frb + Mmin/fr + 5 * (Mmin/(10 * frb)),dim,Mmin);
 
 %count number of star and compare the skies
 
-Compare_s(S,Ps,dim);       %analysis of convolution between psf and original sky
+%Compare_s(S,Ps,dim);       %analysis of convolution between psf and original sky
 %Compare_s(S,Bs,dim);       %analysis of convolution between psf and original sky background added after
-%Compare_s(S,PBs,dim);      %analysis of convolution between psf and original sky plus background
+Compare_s(S,PBs,dim);      %analysis of convolution between psf and original sky plus background
 %Compare_s(S,BPBs,dim);     %analysis of convolution between psf and original sky plus background and bkg added after
 
 function S = Crea_s(Mmin,Mmax,A) 
@@ -191,24 +191,23 @@ cielo ? debolmente dipendente dalla sigma
 Dim = 3, sigma = 1, rec = 507, unrec = 5
 Dim = 3, sigma = 5, rec = 508, unrec = 4
 Dim = 3, sigma = 13, rec = 508, unrec = 4
-Dim = 5, sigma = 1, rec = 495, unrec = 17
 
 Cambiando invece la dim, si pu? solo aumentare nel caso, la situazione
 peggiora, si ha un effetto di sigmapsf che se aumenta peggiora la
 situazione, ma solo se sta sotto la dim
 
-Dim = 7, sigma = 1, rec = 482, unrec = 30
+Dim = 7, sigma = 1, rec = 481, unrec = 31
 Dim = 7, sigma = 3, rec = 452, unrec = 60
-Dim = 7, sigma = 7, rec = 447, unrec = 65
-Dim = 7, sigma = 15, rec = 449, unrec = 63
+Dim = 7, sigma = 7, rec = 448, unrec = 64
+Dim = 7, sigma = 15, rec = 448, unrec = 64
 
 Aumentando ancora la dim la situazione peggiora
 con sempre la sigmapsf che pu? peggiorare le cose, ma solo fino ad un certo
 punto
 
-Dim = 15, sigma = 1, rec = 402, unrec = 110
-Dim = 15, sigma = 13, rec = 362, unrec = 150
-Dim = 15, sigma = 31, rec = 360, unrec = 152
+Dim = 15, sigma = 1, rec = 401, unrec = 111
+Dim = 15, sigma = 13, rec = 357, unrec = 155
+Dim = 15, sigma = 31, rec = 358, unrec = 154
 
 CON IL BACKGROUND AGGIUNTO DOPO PSF:
 Dim PSF costrante a 5 e sigma a 1
@@ -225,7 +224,7 @@ fr = 0.5, thre = 4, rec = 494, unrec = 18, false = 5
 CON IL BACKGROUND CONVOLUTO CON PSF:
 Dim PSF costrante a 5 e sigma a 1
 
-fr = 3, thre = 5, rec = 482, unrec = 30
+fr = 3, thre = 5, rec = 481, unrec = 31
 fr = 2, thre = 5, rec = 324, unrec = 188
 fr = 1, thre = 5, rec = 157, unrec = 355
 fr = 0.5, thre = 5, rec = 76, unrec = 436
@@ -254,10 +253,9 @@ i >= 0.8, rec = 14127, unrec = 35979, ratio_rec = 28%, ratio_unrec =  72%
 %}
 
 %{
-s = histogram(S(S>0));
-edg = s.BinEdges;
-hls = histogram(S(S>0),edg);
+hs = histogram(S(S>0));
+edg = hs.BinEdges;
 hold on
-hlbs = histogram(Bs(Bs>0),edg);
+hbs = histogram(PBs(PBs>0),edg);
 set(gca, 'yscale','log')
 %}
