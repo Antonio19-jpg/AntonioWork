@@ -6,6 +6,8 @@ regolo3 = fitsread('Regolo-0035sec.fit');
 regolo4 = fitsread('Regolo-0045sec.fit');
 dark = fitsread('cal-005__dark.fit');
 flat = fitsread('cal-002__flat.fit');
+bias = fitsread('cal-005_bias.fit');
+
 
 load('esospline.mat')
 load('vegaspline.mat')
